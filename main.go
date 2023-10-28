@@ -1,11 +1,22 @@
 package main
 
 import (
+	"os"
+	"weather-app/main/controllers"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/joho/godotenv"
 )
+
+var currentTab *container.TabItem
+
+func init() {
+	godotenv.Load(".env")
+	os.Setenv("FYNE_FONT", "Virgil GS Regular.ttf")
+}
 
 func main() {
 	myApp := app.New()
@@ -15,13 +26,17 @@ func main() {
 	window.SetFixedSize(true)
 
 	cityEntry := widget.NewEntry()
+	currentTab = container.NewTabItem("CURRENT WEATHER", container.NewCenter(
+		container.NewVBox(
+			widget.NewLabel("Enter a city:"),
+			cityEntry,
+			widget.NewButton("Search", func() {
+				go controllers.CurrentWeather(cityEntry, currentTab)
+			}),
+		)))
+
 	tabs := container.NewAppTabs(
-		container.NewTabItem("CURRENT WEATHER", container.NewCenter(
-			container.NewVBox(
-				widget.NewLabel("Enter a city:"),
-				cityEntry,
-				widget.NewButton("Search", nil),
-			))),
+		currentTab,
 		container.NewTabItem("FORECAST", widget.NewButton("test", nil)),
 	)
 
