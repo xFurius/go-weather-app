@@ -15,7 +15,7 @@ var currentTab *container.TabItem
 
 func init() {
 	godotenv.Load(".env")
-	os.Setenv("FYNE_FONT", "Virgil GS Regular.ttf")
+	os.Setenv("FYNE_FONT", "resources/Virgil GS Regular.ttf")
 }
 
 func main() {

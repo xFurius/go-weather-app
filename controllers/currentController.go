@@ -2,11 +2,13 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"image/color"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"weather-app/main/model"
 
 	"fyne.io/fyne/v2"
@@ -24,6 +26,7 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem) {
 	if err != nil {
 		log.Fatal("Error creating GET request")
 	}
+	//TODO: error handling if city is invalid
 	log.Println(resp.StatusCode)
 
 	var response *model.CurrentResponse
@@ -37,31 +40,39 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem) {
 		log.Fatal("Failed to unmarshal", err)
 	}
 
-	log.Println(response.Location.Name)
-
-	// currentTab = container.NewTabItem("CURRENT WEATHER", container.NewCenter(
-	// 	container.NewVBox(
-	// 		widget.NewLabel("Enter a city:"), <---
-	// 		cityEntry,
-	// 		widget.NewButton("Search", func() {
-	// 			go controllers.CurrentWeather(cityEntry, currentTab)
-	// 		}),
-	// 	)))
-
 	tab.Content.(*fyne.Container).RemoveAll()
 	tab.Content.(*fyne.Container).Add(container.NewVBox())
 	vbox := tab.Content.(*fyne.Container).Objects[0].(*fyne.Container)
 
-	a := canvas.NewText(response.Location.Name, color.White)
-	a.TextSize = 32
-	a.Alignment = fyne.TextAlignCenter
-	vbox.Add(a)
+	//TODO: automation?
+	vbox.Add(newText(response.Location.Name, 36))
+	vbox.Add(newText(response.Location.Country, 18))
+	vbox.Add(newText(strings.Split(response.Location.Localtime, " ")[1], 36))
 
-	a = canvas.NewText(response.Location.Country, color.White)
-	a.TextSize = 22
-	a.Alignment = fyne.TextAlignCenter
-	vbox.Add(a)
+	//TODO: change resource name based on the weather
+	res, err := fyne.LoadResourceFromPath("./resources/113.png")
+	log.Println(err)
 
-	vbox.Add(widget.NewLabel("test3"))
+	image := canvas.NewImageFromResource(res)
+	image.FillMode = canvas.ImageFillOriginal
+	vbox.Add(image)
+
+	vbox.Add(newText(response.Current.Condition.Text, 28))
+	//TODO: give user an option to choose C or F
+	vbox.Add(newText(fmt.Sprint(response.Current.TempC)+"°C / "+fmt.Sprint(response.Current.TempF)+"°F", 28))
+
+	//TODO: make it better
+	vb := container.NewVBox(widget.NewLabel("NE"), widget.NewLabel("NE"), widget.NewLabel("NE"))
+	vb2 := container.NewVBox(widget.NewLabel("NE"), widget.NewLabel("NE"), widget.NewLabel("NE"))
+	vb3 := container.NewVBox(widget.NewLabel("NE"), widget.NewLabel("NE"), widget.NewLabel("NE"))
+	vbox.Add(container.NewHBox(vb, vb2, vb3))
+
 	tab.Content.Refresh()
+}
+
+func newText(c string, s float32) *canvas.Text {
+	a := canvas.NewText(c, color.White)
+	a.TextSize = s
+	a.Alignment = fyne.TextAlignCenter
+	return a
 }
