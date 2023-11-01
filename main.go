@@ -33,6 +33,7 @@ func main() {
 			widget.NewButton("Search", func() {
 				go controllers.CurrentWeather(cityEntry, currentTab)
 			}),
+			widget.NewLabel(""),
 		)))
 
 	tabs := container.NewAppTabs(
