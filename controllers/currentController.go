@@ -60,21 +60,31 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem) {
 	vbox.Add(newCenteredText(fmt.Sprint(response.Current.TempC)+"°C / "+fmt.Sprint(response.Current.TempF)+"°F", 28))
 
 	r := canvas.NewRectangle(color.Transparent)
-	r.SetMinSize(fyne.NewSize(0, 20))
+	r.SetMinSize(fyne.NewSize(0, 5))
 	vbox.Add(container.NewPadded(r))
 
 	//TODO: make it better
 	//TODO: give user an option to choose kph or mph
-	vb := container.NewVBox(newCenteredText("WIND", 12), loadImage("wind.svg"), newCenteredText(fmt.Sprint(response.Current.WindKph)+" kph", 12))
+	vb := container.NewVBox(newCenteredText("WIND", 12), loadImage("wind.svg"), newCenteredText(fmt.Sprint(response.Current.WindKph)+" KpH", 12))
 	vb2 := container.NewVBox(newCenteredText("HUMIDITY", 12), loadImage("water_droplet.svg"), newCenteredText(strconv.Itoa(response.Current.Humidity)+" %", 12))
 	vb3 := container.NewVBox(newCenteredText("PRESSURE", 12), loadImage("hpa.svg"), newCenteredText(fmt.Sprint(response.Current.PressureMb)+" hPa", 12))
 	//TODO: add spacing between vbs
 	r = canvas.NewRectangle(color.Transparent)
 	r.SetMinSize(fyne.NewSize(20, 0))
 	vbox.Add(container.NewPadded(r))
-	vbox.Add(container.NewHBox(vb, r, vb2, r, vb3))
+	vbox.Add(container.NewCenter(container.NewHBox(vb, container.NewPadded(r), vb2, container.NewPadded(r), vb3)))
 
-	tab.Content.Refresh()
+	r = canvas.NewRectangle(color.Transparent)
+	r.SetMinSize(fyne.NewSize(0, 5))
+	vbox.Add(container.NewPadded(r))
+
+	//spacer
+	r = canvas.NewRectangle(color.Transparent)
+	r.SetMinSize(fyne.NewSize(20, 0))
+
+	pm25 := container.NewHBox(container.NewVBox(widget.NewLabel("PM 2.5: "+fmt.Sprint(response.Current.AirQuality.Pm25)+" µg/m³"), newCenteredText(airQualityPm25String(response.Current.AirQuality.Pm25), 14), newCenteredText("alarming 110 µg/m³", 12)))
+	pm10 := container.NewVBox(container.NewVBox( /*newcentertext*/ widget.NewLabel("PM 10: "+fmt.Sprint(response.Current.AirQuality.Pm10)+" µg/m³"), newCenteredText(airQualityPm10String(response.Current.AirQuality.Pm10), 14), newCenteredText("alarming 150 µg/m³", 12)))
+	vbox.Add(container.NewHBox(pm25, container.NewPadded(r), pm10))
 }
 
 func newCenteredText(c string, s float32) *canvas.Text {
@@ -92,4 +102,42 @@ func loadImage(name string) *canvas.Image {
 	image := canvas.NewImageFromResource(res)
 	image.FillMode = canvas.ImageFillOriginal
 	return image
+}
+
+func airQualityPm25String(i float64) string {
+	var s strings.Builder
+	s.WriteString("Air quality: ")
+	if i < 13 {
+		s.WriteString("Very Good")
+	} else if i < 35 {
+		s.WriteString("Good")
+	} else if i < 55 {
+		s.WriteString("Average")
+	} else if i < 75 {
+		s.WriteString("Sufficient")
+	} else if i < 110 {
+		s.WriteString("Bad")
+	} else {
+		s.WriteString("Very Bad")
+	}
+	return s.String()
+}
+
+func airQualityPm10String(i float64) string {
+	var s strings.Builder
+	s.WriteString("Air quality: ")
+	if i < 20 {
+		s.WriteString("Very Good")
+	} else if i < 50 {
+		s.WriteString("Good")
+	} else if i < 80 {
+		s.WriteString("Average")
+	} else if i < 110 {
+		s.WriteString("Sufficient")
+	} else if i < 150 {
+		s.WriteString("Bad")
+	} else {
+		s.WriteString("Very Bad")
+	}
+	return s.String()
 }

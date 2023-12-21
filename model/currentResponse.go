@@ -23,10 +23,8 @@ type CurrentResponse struct {
 		PressureIn float64 `json:"pressure_in"`
 		Humidity   int     `json:"humidity"`
 		AirQuality struct {
-			Pm25         float64 `json:"pm2_5"`
-			Pm10         float64 `json:"pm10"`
-			UsEpaIndex   int     `json:"us-epa-index"`
-			GbDefraIndex int     `json:"gb-defra-index"`
+			Pm25 float64 `json:"pm2_5"`
+			Pm10 float64 `json:"pm10"`
 		} `json:"air_quality"`
 	} `json:"current"`
 }
