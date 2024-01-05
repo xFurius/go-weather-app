@@ -19,7 +19,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func CurrentWeather(entry *widget.Entry, tab *container.TabItem) {
+func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string, windUnit string) {
 	url := "http://api.weatherapi.com/v1/current.json?key=" + os.Getenv("API_KEY") + "&q=" + entry.Text + "&aqi=yes"
 
 	resp, err := http.Get(url)
@@ -56,16 +56,26 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem) {
 	vbox.Add(loadImage("113.png"))
 
 	vbox.Add(newCenteredText(response.Current.Condition.Text, 28))
-	//TODO: give user an option to choose C or F
-	vbox.Add(newCenteredText(fmt.Sprint(response.Current.TempC)+"°C / "+fmt.Sprint(response.Current.TempF)+"°F", 28))
+	var tempText string
+	if tempUnit == "°C" {
+		tempText = fmt.Sprint(response.Current.TempC) + "°C"
+	} else {
+		tempText = fmt.Sprint(response.Current.TempF) + "°F"
+	}
+	vbox.Add(newCenteredText(tempText, 28))
 
 	r := canvas.NewRectangle(color.Transparent)
 	r.SetMinSize(fyne.NewSize(0, 5))
 	vbox.Add(container.NewPadded(r))
 
 	//TODO: make it better
-	//TODO: give user an option to choose kph or mph
-	vb := container.NewVBox(newCenteredText("WIND", 12), loadImage("wind.svg"), newCenteredText(fmt.Sprint(response.Current.WindKph)+" KpH", 12))
+	var windText string
+	if windUnit == "Kph" {
+		windText = fmt.Sprint(response.Current.WindKph) + " Kph"
+	} else {
+		windText = fmt.Sprint(response.Current.WindMph) + " Mph"
+	}
+	vb := container.NewVBox(newCenteredText("WIND", 12), loadImage("wind.svg"), newCenteredText(windText, 12))
 	vb2 := container.NewVBox(newCenteredText("HUMIDITY", 12), loadImage("water_droplet.svg"), newCenteredText(strconv.Itoa(response.Current.Humidity)+" %", 12))
 	vb3 := container.NewVBox(newCenteredText("PRESSURE", 12), loadImage("hpa.svg"), newCenteredText(fmt.Sprint(response.Current.PressureMb)+" hPa", 12))
 	//TODO: add spacing between vbs

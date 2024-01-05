@@ -26,12 +26,18 @@ func main() {
 	window.SetFixedSize(true)
 
 	cityEntry := widget.NewEntry()
+	tempUnit := widget.NewRadioGroup([]string{"°C", "°F"}, nil)
+	tempUnit.Horizontal = true
+	windUnit := widget.NewRadioGroup([]string{"Kph", "Mph"}, nil)
+	windUnit.Horizontal = true
 	currentTab = container.NewTabItem("CURRENT WEATHER", container.NewCenter(
 		container.NewVBox(
 			widget.NewLabel("Enter a city:"),
 			cityEntry,
+			tempUnit,
+			windUnit,
 			widget.NewButton("Search", func() {
-				go controllers.CurrentWeather(cityEntry, currentTab)
+				go controllers.CurrentWeather(cityEntry, currentTab, tempUnit.Selected, windUnit.Selected)
 			}),
 			widget.NewLabel(""),
 		)))
