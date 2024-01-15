@@ -26,8 +26,8 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string
 	if err != nil {
 		log.Fatal("Error creating GET request")
 	}
-	if resp.StatusCode == 400 { //
-		tab.Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[3].(*widget.Label).SetText("THE CITY IS INVALID")
+	if resp.StatusCode == 400 {
+		tab.Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[5].(*widget.Label).SetText("THE CITY IS INVALID")
 		runtime.Goexit()
 		return
 	}
@@ -47,13 +47,15 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string
 	tab.Content.(*fyne.Container).Add(container.NewVBox())
 	vbox := tab.Content.(*fyne.Container).Objects[0].(*fyne.Container)
 
-	//TODO: automation?
 	vbox.Add(newCenteredText(response.Location.Name, 36))
 	vbox.Add(newCenteredText(response.Location.Country, 18))
 	vbox.Add(newCenteredText(strings.Split(response.Location.Localtime, " ")[1], 36))
 
-	//TODO: change resource name based on the weather
-	vbox.Add(loadImage("113.png"))
+	if response.Current.IsDay == 1 {
+		vbox.Add(loadImage("weather/day/" + strings.Split(response.Current.Condition.Icon, "/")[6]))
+	} else {
+		vbox.Add(loadImage("weather/night/" + strings.Split(response.Current.Condition.Icon, "/")[6]))
+	}
 
 	vbox.Add(newCenteredText(response.Current.Condition.Text, 28))
 	var tempText string
@@ -64,11 +66,8 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string
 	}
 	vbox.Add(newCenteredText(tempText, 28))
 
-	r := canvas.NewRectangle(color.Transparent)
-	r.SetMinSize(fyne.NewSize(0, 5))
-	vbox.Add(container.NewPadded(r))
+	vbox.Add(newSpacer(0, 5))
 
-	//TODO: make it better
 	var windText string
 	if windUnit == "Kph" {
 		windText = fmt.Sprint(response.Current.WindKph) + " Kph"
@@ -78,23 +77,13 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string
 	vb := container.NewVBox(newCenteredText("WIND", 12), loadImage("wind.svg"), newCenteredText(windText, 12))
 	vb2 := container.NewVBox(newCenteredText("HUMIDITY", 12), loadImage("water_droplet.svg"), newCenteredText(strconv.Itoa(response.Current.Humidity)+" %", 12))
 	vb3 := container.NewVBox(newCenteredText("PRESSURE", 12), loadImage("hpa.svg"), newCenteredText(fmt.Sprint(response.Current.PressureMb)+" hPa", 12))
-	//TODO: add spacing between vbs
-	r = canvas.NewRectangle(color.Transparent)
-	r.SetMinSize(fyne.NewSize(20, 0))
-	vbox.Add(container.NewPadded(r))
-	vbox.Add(container.NewCenter(container.NewHBox(vb, container.NewPadded(r), vb2, container.NewPadded(r), vb3)))
+	vbox.Add(newSpacer(20, 0))
+	vbox.Add(container.NewCenter(container.NewHBox(vb, newSpacer(20, 0), vb2, newSpacer(20, 0), vb3)))
+	vbox.Add(newSpacer(0, 5))
 
-	r = canvas.NewRectangle(color.Transparent)
-	r.SetMinSize(fyne.NewSize(0, 5))
-	vbox.Add(container.NewPadded(r))
-
-	//spacer
-	r = canvas.NewRectangle(color.Transparent)
-	r.SetMinSize(fyne.NewSize(20, 0))
-
-	pm25 := container.NewHBox(container.NewVBox(widget.NewLabel("PM 2.5: "+fmt.Sprint(response.Current.AirQuality.Pm25)+" µg/m³"), newCenteredText(airQualityPm25String(response.Current.AirQuality.Pm25), 14), newCenteredText("alarming 110 µg/m³", 12)))
-	pm10 := container.NewVBox(container.NewVBox( /*newcentertext*/ widget.NewLabel("PM 10: "+fmt.Sprint(response.Current.AirQuality.Pm10)+" µg/m³"), newCenteredText(airQualityPm10String(response.Current.AirQuality.Pm10), 14), newCenteredText("alarming 150 µg/m³", 12)))
-	vbox.Add(container.NewHBox(pm25, container.NewPadded(r), pm10))
+	pm25 := container.NewHBox(container.NewVBox(newCenteredText("PM 2.5: "+fmt.Sprint(response.Current.AirQuality.Pm25)+" µg/m³", 14), newCenteredText(airQualityPm25String(response.Current.AirQuality.Pm25), 14), newCenteredText("alarming 110 µg/m³", 12)))
+	pm10 := container.NewVBox(container.NewVBox(newCenteredText("PM 10: "+fmt.Sprint(response.Current.AirQuality.Pm10)+" µg/m³", 14), newCenteredText(airQualityPm10String(response.Current.AirQuality.Pm10), 14), newCenteredText("alarming 150 µg/m³", 12)))
+	vbox.Add(container.NewHBox(pm25, newSpacer(20, 0), pm10))
 }
 
 func newCenteredText(c string, s float32) *canvas.Text {
@@ -112,6 +101,12 @@ func loadImage(name string) *canvas.Image {
 	image := canvas.NewImageFromResource(res)
 	image.FillMode = canvas.ImageFillOriginal
 	return image
+}
+
+func newSpacer(w, h float32) *fyne.Container {
+	r := canvas.NewRectangle(color.Transparent)
+	r.SetMinSize(fyne.NewSize(w, h))
+	return container.NewPadded(r)
 }
 
 func airQualityPm25String(i float64) string {
