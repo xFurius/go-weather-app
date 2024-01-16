@@ -11,8 +11,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var currentTab *container.TabItem
-
 func init() {
 	godotenv.Load(".env")
 	os.Setenv("FYNE_FONT", "resources/Virgil GS Regular.ttf")
@@ -30,21 +28,23 @@ func main() {
 	tempUnit.Horizontal = true
 	windUnit := widget.NewRadioGroup([]string{"Kph", "Mph"}, nil)
 	windUnit.Horizontal = true
-	currentTab = container.NewTabItem("CURRENT WEATHER", container.NewCenter(
+
+	var tabs *container.DocTabs
+
+	menuTab := container.NewTabItem("MENU", container.NewCenter(
 		container.NewVBox(
-			widget.NewLabel("Enter a city:"),
+			widget.NewLabel("Enter a city:"), //newcentertext
 			cityEntry,
 			tempUnit,
 			windUnit,
 			widget.NewButton("Search", func() {
-				go controllers.CurrentWeather(cityEntry, currentTab, tempUnit.Selected, windUnit.Selected)
+				go controllers.CurrentWeather(cityEntry, tabs, tempUnit.Selected, windUnit.Selected)
 			}),
 			widget.NewLabel(""),
 		)))
 
-	tabs := container.NewAppTabs(
-		currentTab,
-		container.NewTabItem("FORECAST", widget.NewButton("test", nil)),
+	tabs = container.NewDocTabs(
+		menuTab,
 	)
 
 	window.SetContent(tabs)

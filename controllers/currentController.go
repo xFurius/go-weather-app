@@ -19,7 +19,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string, windUnit string) {
+func CurrentWeather(entry *widget.Entry, tabs *container.DocTabs, tempUnit string, windUnit string) {
 	url := "http://api.weatherapi.com/v1/current.json?key=" + os.Getenv("API_KEY") + "&q=" + entry.Text + "&aqi=yes"
 
 	resp, err := http.Get(url)
@@ -27,10 +27,12 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string
 		log.Fatal("Error creating GET request")
 	}
 	if resp.StatusCode == 400 {
-		tab.Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[5].(*widget.Label).SetText("THE CITY IS INVALID")
+		tabs.Items[0].Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[5].(*widget.Label).SetText("THE CITY IS INVALID")
 		runtime.Goexit()
 		return
 	}
+
+	tabs.Items[0].Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[5].(*widget.Label).SetText("")
 
 	var response *model.CurrentResponse
 	respBody, err := io.ReadAll(resp.Body)
@@ -43,30 +45,28 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string
 		log.Fatal("Failed to unmarshal", err)
 	}
 
-	tab.Content.(*fyne.Container).RemoveAll()
-	tab.Content.(*fyne.Container).Add(container.NewVBox())
-	vbox := tab.Content.(*fyne.Container).Objects[0].(*fyne.Container)
+	content := container.NewVBox()
 
-	vbox.Add(newCenteredText(response.Location.Name, 36))
-	vbox.Add(newCenteredText(response.Location.Country, 18))
-	vbox.Add(newCenteredText(strings.Split(response.Location.Localtime, " ")[1], 36))
+	content.Add(newCenteredText(response.Location.Name, 36))
+	content.Add(newCenteredText(response.Location.Country, 18))
+	content.Add(newCenteredText(strings.Split(response.Location.Localtime, " ")[1], 36))
 
 	if response.Current.IsDay == 1 {
-		vbox.Add(loadImage("weather/day/" + strings.Split(response.Current.Condition.Icon, "/")[6]))
+		content.Add(loadImage("weather/day/" + strings.Split(response.Current.Condition.Icon, "/")[6]))
 	} else {
-		vbox.Add(loadImage("weather/night/" + strings.Split(response.Current.Condition.Icon, "/")[6]))
+		content.Add(loadImage("weather/night/" + strings.Split(response.Current.Condition.Icon, "/")[6]))
 	}
 
-	vbox.Add(newCenteredText(response.Current.Condition.Text, 28))
+	content.Add(newCenteredText(response.Current.Condition.Text, 28))
 	var tempText string
 	if tempUnit == "°C" {
 		tempText = fmt.Sprint(response.Current.TempC) + "°C"
 	} else {
 		tempText = fmt.Sprint(response.Current.TempF) + "°F"
 	}
-	vbox.Add(newCenteredText(tempText, 28))
+	content.Add(newCenteredText(tempText, 28))
 
-	vbox.Add(newSpacer(0, 5))
+	content.Add(newSpacer(0, 5))
 
 	var windText string
 	if windUnit == "Kph" {
@@ -77,13 +77,17 @@ func CurrentWeather(entry *widget.Entry, tab *container.TabItem, tempUnit string
 	vb := container.NewVBox(newCenteredText("WIND", 12), loadImage("wind.svg"), newCenteredText(windText, 12))
 	vb2 := container.NewVBox(newCenteredText("HUMIDITY", 12), loadImage("water_droplet.svg"), newCenteredText(strconv.Itoa(response.Current.Humidity)+" %", 12))
 	vb3 := container.NewVBox(newCenteredText("PRESSURE", 12), loadImage("hpa.svg"), newCenteredText(fmt.Sprint(response.Current.PressureMb)+" hPa", 12))
-	vbox.Add(newSpacer(20, 0))
-	vbox.Add(container.NewCenter(container.NewHBox(vb, newSpacer(20, 0), vb2, newSpacer(20, 0), vb3)))
-	vbox.Add(newSpacer(0, 5))
+	content.Add(newSpacer(20, 0))
+	content.Add(container.NewCenter(container.NewHBox(vb, newSpacer(20, 0), vb2, newSpacer(20, 0), vb3)))
+	content.Add(newSpacer(0, 5))
 
 	pm25 := container.NewHBox(container.NewVBox(newCenteredText("PM 2.5: "+fmt.Sprint(response.Current.AirQuality.Pm25)+" µg/m³", 14), newCenteredText(airQualityPm25String(response.Current.AirQuality.Pm25), 14), newCenteredText("alarming 110 µg/m³", 12)))
 	pm10 := container.NewVBox(container.NewVBox(newCenteredText("PM 10: "+fmt.Sprint(response.Current.AirQuality.Pm10)+" µg/m³", 14), newCenteredText(airQualityPm10String(response.Current.AirQuality.Pm10), 14), newCenteredText("alarming 150 µg/m³", 12)))
-	vbox.Add(container.NewHBox(pm25, newSpacer(20, 0), pm10))
+	content.Add(container.NewCenter(container.NewHBox(pm25, newSpacer(20, 0), pm10)))
+
+	t := container.NewTabItem("current weather in "+entry.Text, content)
+	tabs.Append(t)
+	tabs.Select(t)
 }
 
 func newCenteredText(c string, s float32) *canvas.Text {
